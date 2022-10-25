@@ -40,3 +40,32 @@ class ContrastiveLearningDataset:
             raise InvalidDatasetSelection()
         else:
             return dataset_fn()
+
+
+class PANDA_Dataset(Dataset):
+  def __init__(self, data_dir, df):
+    self.data_dir = data_dir
+    self.df = df
+
+  def __getitem__(self, index):
+    idx_1, idx_2 = random.sample(range(0, len(df_train)), 2)
+    row_1 = self.df.iloc[idx_1]
+    row_2 = self.df.iloc[idx_2]
+
+    image_id_1 = row_1['image_id']
+    image_id_2 = row_2['image_id']
+
+    image_1 = Image.open(os.path.join(self.data_dir, image_id_1.split('_')[0], image_id_1+'.jpeg'))
+    image_2 = Image.open(os.path.join(self.data_dir, image_id_2.split('_')[0], image_id_2+'.jpeg'))
+    image_1 = transforms.PILToTensor()(image_1)
+    image_2 = transforms.PILToTensor()(image_2)
+
+    label_1 = row_1['gleason_score']
+    label_2 = row_2['gleason_score']
+    label_1 = torch.tensor(label_1, dtype=torch.long)
+    label_2 = torch.tensor(label_2, dtype=torch.long)
+
+    return image_1.float(), image_2.float()
+
+  def __len__(self):
+    return len(self.df)
